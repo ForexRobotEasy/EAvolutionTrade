@@ -1,0 +1,78 @@
+
+//+------------------------------------------------------------------+
+//|                                              EAvolutionTrade.mq5 |
+//|                          Copyright 2021, Forex Robot Easy Team   |
+//|                                                   forexroboteasy.com |
+//+------------------------------------------------------------------+
+#property copyright 'Copyright 2021, Forex Robot Easy Team'
+#property link      'forexroboteasy.com'
+#property version   '1.00'
+#property strict
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+// Global variables
+input double RiskPercentage = 2.0;  // User's risk tolerance percentage
+input double TargetProfit = 100.0;  // User's target profit in pips
+input double StopLoss = 50.0;  // User's stop loss in pips
+input double LotSize = 0.1;  // User's lot size for trading
+input double TrailingStop = 30.0;  // User's trailing stop in pips
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+// Expert Advisor initialization function
+int OnInit()
+{
+   // Add initialization code here
+   return(INIT_SUCCEEDED);
+}
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+// Expert Advisor start function
+void OnStart()
+{
+   // Add main trading logic here
+   double accountBalance = AccountBalance();
+   double riskAmount = accountBalance * RiskPercentage / 100.0;
+   double stopLossPrice = NormalizeDouble(SymbolInfoDouble(Symbol(), SYMBOL_ASK) - StopLoss * Point(), Digits);
+   double takeProfitPrice = NormalizeDouble(SymbolInfoDouble(Symbol(), SYMBOL_ASK) + TargetProfit * Point(), Digits);
+
+   double lotSize = NormalizeDouble(riskAmount / (StopLoss * Point()), 2);
+   if (lotSize < LotSize) lotSize = LotSize;
+
+   // Open a buy order
+   int ticket = OrderSend(Symbol(), OP_BUY, lotSize, SymbolInfoDouble(Symbol(), SYMBOL_ASK), 0, stopLossPrice, takeProfitPrice, 'EAvolutionTrade', 0, 0, Green);
+
+   if (ticket > 0)
+   {
+      Print('Buy order opened successfully. Ticket: ', ticket);
+   }
+   else
+   {
+      Print('Failed to open buy order. Error: ', GetLastError());
+   }
+
+   // Add trailing stop
+   bool success = OrderModify(ticket, SymbolInfoDouble(Symbol(), SYMBOL_ASK), stopLossPrice, takeProfitPrice, 0, Blue);
+   if (success)
+   {
+      Print('Trailing stop activated successfully.');
+   }
+   else
+   {
+      Print('Failed to activate trailing stop. Error: ', GetLastError());
+   }
+}
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+// Expert Advisor deinitialization function
+void OnDeinit(const int reason)
+{
+   // Add deinitialization code here
+}
